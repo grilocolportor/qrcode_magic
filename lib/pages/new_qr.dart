@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -12,6 +13,8 @@ import 'package:qrcode_magic/controllers/AppDropdownController.dart';
 import 'package:qrcode_magic/dialogs/GenerateOptionsDialog.dart';
 import 'package:screenshot/screenshot.dart';
 import 'package:share_plus/share_plus.dart';
+
+import '../utils/system.dart';
 
 class NewQR extends StatefulWidget {
   const NewQR({Key? key}) : super(key: key);
@@ -31,6 +34,8 @@ class _NewQRState extends State<NewQR> {
   double _size = 220.0;
   bool _rounded = true;
   String? _image;
+
+  bool permissionGranted = false;
 
   void _generateQR() {
     TextEditingController sizeController = TextEditingController(),
@@ -89,16 +94,25 @@ class _NewQRState extends State<NewQR> {
 
     var storage = Directory(
         "${(await _channel.invokeMethod("getExternalStorageDirectory"))}/QRCodeMagic");
-    var status = await Permission.storage.status;
-    if (!status.isGranted && !(await Permission.storage.request().isGranted)) {
-      return Future.error(localization?.errorOccurred
-              .replaceAll("%error%", localization.allowManageFiles) ??
-          "");
-    }
+    await checkPermission(TargetPlatform.android);
 
-    storage.createSync(recursive: true);
+    //await _getStoragePermission();
+    // return Future.error(localization?.errorOccurred
+    //         .replaceAll("%error%", localization.allowManageFiles) ??
+    //     "");
 
-    var now = DateTime.now();
+    // var status = await Permission.manageExternalStorage.status;
+    // if (!status.isGranted ) { //&& !(await Permission.storage.request().isGranted)
+    //  Permission.manageExternalStorage.request();
+    //   return Future.error(localization?.errorOccurred
+    //           .replaceAll("%error%", localization.allowManageFiles) ??
+    //       "");
+    // }else{
+    //   Permission.manageExternalStorage.request();
+    // }
+
+    // storage.createSync(recursive: true);
+
     return controller
         .captureFromWidget(PrettyQr(
       data: _data,
@@ -107,17 +121,43 @@ class _NewQRState extends State<NewQR> {
       image: _image != null ? FileImage(File(_image!)) : null,
     ))
         .then((value) async {
-      final generatedQR = await File(
-              "${storage.path}/${now.year}-${now.month}-${now.day} ${now.hour}:${now.minute}:${now.second}.png")
-          .create();
-      generatedQR.writeAsBytes(value);
-      return generatedQR.path;
+      // final generatedQR = await File(
+      //     "${storage.path}/${now.year}-${now.month}-${now.day} ${now.hour}:${now.minute}:${now.second}.png");
+      // await generatedQR.create(recursive: true);
+      // Uint8List bytes = await generatedQR.readAsBytes();
+      // await generatedQR.writeAsBytes(bytes);
+      // return generatedQR.path;
+      return writeBytes(value, null).then((v)  { 
+        print('${v.path}');
+       return  v.path;});
     });
   }
 
   Future<void> _share() async {
-    return _saveQR(context)
-        .then((value) => Share.shareXFiles([XFile(value)], text: 'QRCode'));
+     await _saveQR(context).then((value) {
+      print(value);
+  
+      Share.shareXFiles([XFile(value)], text: 'QRCode');
+    });
+  }
+
+  Future<void> _getStoragePermission() async {
+    DeviceInfoPlugin plugin = DeviceInfoPlugin();
+    AndroidDeviceInfo android = await plugin.androidInfo;
+    // if (android.version.sdkInt < 33) {
+    if (await Permission.manageExternalStorage.request().isGranted) {
+      setState(() {
+        Permission.storage.request();
+        permissionGranted = true;
+      });
+    } else if (await Permission.storage.request().isPermanentlyDenied) {
+      await openAppSettings();
+    } else if (await Permission.audio.request().isDenied) {
+      await openAppSettings();
+      setState(() {
+        permissionGranted = true;
+      });
+    }
   }
 
   @override
@@ -231,7 +271,7 @@ class _NewQRState extends State<NewQR> {
                             AppButton(
                                 onPressed: _saving
                                     ? () {}
-                                    : () {
+                                    : () async {
                                         if (_dataController.text
                                             .trim()
                                             .isEmpty) {
@@ -244,7 +284,7 @@ class _NewQRState extends State<NewQR> {
                                         }
 
                                         setState(() => _saving = true);
-                                        _saveQR(context).then((value) {
+                                        await _saveQR(context).then((value) {
                                           ScaffoldMessenger.of(context)
                                               .showSnackBar(SnackBar(
                                                   content: Text(localization

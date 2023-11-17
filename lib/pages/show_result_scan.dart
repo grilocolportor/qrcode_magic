@@ -23,7 +23,7 @@ class _ShowResultScanState extends State<ShowResultScan> {
   void didChangeDependencies() {
     // TODO: implement didChangeDependencies
     super.didChangeDependencies();
-    loadNativeAd();
+    //loadNativeAd();
   }
 
   void loadNativeAd() {
@@ -140,7 +140,7 @@ class _ShowResultScanState extends State<ShowResultScan> {
         const SizedBox(
           height: 8,
         ),
-        isNativeAdLoaded
+      /*  isNativeAdLoaded
             ? Container(
                 decoration: const BoxDecoration(
                   color: Colors.white,
@@ -150,7 +150,7 @@ class _ShowResultScanState extends State<ShowResultScan> {
                   ad: nativeAd!,
                 ),
               )
-            : const SizedBox()
+            : const SizedBox()*/
       ],
     ));
   }

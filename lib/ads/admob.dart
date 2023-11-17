@@ -8,7 +8,7 @@ class Admobs {
   
   static BannerAd getBannerAd(BuildContext context) {
     return BannerAd(
-      adUnitId: AdmobConfigTeste.bannerAdUnitId,
+      adUnitId: AdmobConfig.bannerAdUnitId,
       size:
           AdSize(width: MediaQuery.of(context).size.width.toInt(), height: 60),
       request: const AdRequest(),

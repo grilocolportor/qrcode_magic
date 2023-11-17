@@ -3,7 +3,7 @@ import 'package:qrcode_magic/utils/ColorUtils.dart';
 
 var appTheme = ThemeData(
   fontFamily: 'Poppins',
-  primarySwatch: createMaterialColor(const Color(0xFF3584FA)),
+  primarySwatch: createMaterialColor(Color.fromARGB(255, 250, 220, 53)),
   inputDecorationTheme:
       const InputDecorationTheme(isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 0, vertical: 0)),
   textTheme: const TextTheme(
